@@ -7,12 +7,22 @@
                     "host": "IP Address",
                     "api_key": "API Key"
                 }
+            },
+            "reauth_confirm": {
+                "title": "Re-authenticate Healthbox",
+                "description": "The API key for the Healthbox at {host} was rejected. Enter a valid API key.",
+                "data": {
+                    "api_key": "API Key"
+                }
             }
         },
         "error": {
             "auth": "API Key is wrong.",
             "connection": "Unable to connect to the Healthbox 3 Unit.",
             "unknown": "Unknown error occurred."
+        },
+        "abort": {
+            "reauth_successful": "Re-authentication was successful."
         }
     },
     "options": {
@@ -22,6 +32,11 @@
                     "api_key": "API Key"
                 }
             }
+        },
+        "error": {
+            "auth": "API Key is wrong.",
+            "connection": "Unable to connect to the Healthbox 3 Unit.",
+            "unknown": "Unknown error occurred."
         }
     }
 }

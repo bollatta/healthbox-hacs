@@ -7,12 +7,22 @@
                     "host": "IP-adres",
                     "api_key": "API-sleutel"
                 }
+            },
+            "reauth_confirm": {
+                "title": "Healthbox opnieuw verifiëren",
+                "description": "De API-sleutel voor de Healthbox op {host} is geweigerd. Voer een geldige API-sleutel in.",
+                "data": {
+                    "api_key": "API-sleutel"
+                }
             }
         },
         "error": {
             "auth": "De API-sleutel is onjuist.",
             "connection": "Kan geen verbinding maken met de Healthbox 3-eenheid.",
             "unknown": "Er is een onbekende fout opgetreden."
+        },
+        "abort": {
+            "reauth_successful": "Opnieuw verifiëren is gelukt."
         }
     },
     "options": {
@@ -22,6 +32,11 @@
                     "api_key": "API-sleutel"
                 }
             }
+        },
+        "error": {
+            "auth": "De API-sleutel is onjuist.",
+            "connection": "Kan geen verbinding maken met de Healthbox 3-eenheid.",
+            "unknown": "Er is een onbekende fout opgetreden."
         }
     }
 }

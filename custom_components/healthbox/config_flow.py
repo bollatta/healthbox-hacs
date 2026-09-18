@@ -1,6 +1,7 @@
 """Config flow for Renson Healthbox integration."""
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import voluptuous as vol
@@ -10,8 +11,11 @@ from homeassistant import config_entries
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import selector
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from homeassistant.core import callback
+from homeassistant.helpers.aiohttp_client import (
+    async_create_clientsession,
+    async_get_clientsession,
+)
+from homeassistant.core import HomeAssistant, callback
 
 from homeassistant.const import CONF_HOST, CONF_API_KEY
 from pyhealthbox3.healthbox3 import (
@@ -22,6 +26,29 @@ from pyhealthbox3.healthbox3 import (
 )
 
 from .const import DOMAIN, LOGGER
+
+
+async def _async_check_api_key(
+    hass: HomeAssistant, host: str, api_key: str
+) -> str | None:
+    """Try the API key against the device; return an error key, or None if valid."""
+    client = Healthbox3(
+        host=host,
+        api_key=api_key,
+        session=async_get_clientsession(hass),
+    )
+    try:
+        await client.async_enable_advanced_api_features()
+    except Healthbox3ApiClientAuthenticationError as exception:
+        LOGGER.warning(exception)
+        return "auth"
+    except Healthbox3ApiClientCommunicationError as exception:
+        LOGGER.error(exception)
+        return "connection"
+    except Healthbox3ApiClientError as exception:
+        LOGGER.exception(exception)
+        return "unknown"
+    return None
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -89,6 +116,44 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_reauth(
+        self, entry_data: Mapping[str, Any]
+    ) -> FlowResult:
+        """Start reauthentication after the device rejected the API key."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Ask for a new API key and validate it."""
+        errors: dict[str, str] = {}
+        entry = self._get_reauth_entry()
+        if user_input is not None:
+            if error := await _async_check_api_key(
+                self.hass, entry.data[CONF_HOST], user_input[CONF_API_KEY]
+            ):
+                errors["base"] = error
+            else:
+                return self.async_update_reload_and_abort(
+                    entry,
+                    data={**entry.data, CONF_API_KEY: user_input[CONF_API_KEY]},
+                )
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_API_KEY): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            type=selector.TextSelectorType.PASSWORD
+                        ),
+                    ),
+                }
+            ),
+            description_placeholders={"host": entry.data[CONF_HOST]},
+            errors=errors,
+        )
+
     async def _test_credentials(self, ipaddress: str, apikey: str) -> None:
         """Validate credentials."""
         client = Healthbox3(
@@ -128,28 +193,21 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     ) -> FlowResult:
         """Manage the options."""
 
-        errors = {}
-        host: str = self.entry.data.get(CONF_HOST, "")
+        errors: dict[str, str] = {}
         if user_input is not None:
-            if (api_key := user_input.get(CONF_API_KEY)) is None:
-                errors[CONF_API_KEY] = "Invalid API Key"
+            api_key: str = user_input[CONF_API_KEY]
+            # Validate first; only a working key may be stored.
+            if error := await _async_check_api_key(
+                self.hass, self.entry.data.get(CONF_HOST, ""), api_key
+            ):
+                errors["base"] = error
             else:
-                try:
-                    self.hass.config_entries.async_update_entry(
-                        entry=self.entry,
-                        data={CONF_HOST: host,
-                              CONF_API_KEY: user_input[CONF_API_KEY]},
-                    )
-                    hb3 = Healthbox3(host=host, api_key=api_key)
-                    await hb3.async_enable_advanced_api_features(pre_validation=False)
-                    await hb3.close()
-                except Healthbox3ApiClientAuthenticationError:
-                    pass
-                finally:
-                    errors[CONF_API_KEY] = "Invalid API Key"
-
+                # The update listener reloads the entry with the new key.
+                self.hass.config_entries.async_update_entry(
+                    self.entry, data={**self.entry.data, CONF_API_KEY: api_key}
+                )
                 return self.async_create_entry(
-                    title="", data=user_input | {CONF_API_KEY: api_key or None}
+                    title="", data=dict(self.entry.options)
                 )
 
         return self.async_show_form(
@@ -157,8 +215,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_API_KEY, default=self.entry.data.get(
-                            CONF_API_KEY, "")
+                        CONF_API_KEY,
+                        default=(user_input or {}).get(
+                            CONF_API_KEY, self.entry.data.get(CONF_API_KEY, "")
+                        ),
                     ): selector.TextSelector(
                         selector.TextSelectorConfig(
                             type=selector.TextSelectorType.PASSWORD
