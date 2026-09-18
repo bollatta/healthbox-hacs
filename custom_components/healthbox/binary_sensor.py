@@ -7,12 +7,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from pyhealthbox3.models import Healthbox3Room
+
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
 
-from .const import DOMAIN, HealthboxRoom
+from .const import DOMAIN
 from .coordinator import HealthboxDataUpdateCoordinator
 from .entity import HealthboxRoomEntity
 
@@ -21,7 +23,7 @@ from .entity import HealthboxRoomEntity
 class HealthboxRoomEntityDescriptionMixin:
     """Mixin values for Healthbox Room entities."""
 
-    room: HealthboxRoom
+    room: Healthbox3Room
     is_on: bool
 
 

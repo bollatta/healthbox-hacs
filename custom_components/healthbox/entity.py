@@ -3,8 +3,9 @@ from __future__ import annotations
 
 from homeassistant.helpers.entity import DeviceInfo, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from pyhealthbox3.models import Healthbox3Room
 
-from .const import DOMAIN, LOGGER, HealthboxRoom
+from .const import DOMAIN, LOGGER
 from .coordinator import HealthboxDataUpdateCoordinator
 
 
@@ -37,7 +38,7 @@ class HealthboxRoomEntity(CoordinatorEntity[HealthboxDataUpdateCoordinator]):
         )
 
     @property
-    def _room(self) -> HealthboxRoom | None:
+    def _room(self) -> Healthbox3Room | None:
         """Return this entity's room from the latest data, or None if it is gone.
 
         A missing room is logged once when it disappears and once when it

@@ -11,6 +11,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from pyhealthbox3.models import Healthbox3Room
+
 from homeassistant.const import (
     UnitOfTemperature,
     PERCENTAGE,
@@ -32,7 +34,7 @@ from homeassistant.components.sensor import (
 )
 
 
-from .const import DOMAIN, MANUFACTURER, HealthboxRoom
+from .const import DOMAIN, MANUFACTURER
 from .coordinator import HealthboxDataUpdateCoordinator
 from .entity import HealthboxRoomEntity
 
@@ -55,7 +57,7 @@ class HealthboxGlobalSensorEntityDescription(
 class HealthboxRoomEntityDescriptionMixin:
     """Mixin values for Healthbox Room entities."""
 
-    room: HealthboxRoom
+    room: Healthbox3Room
     value_fn: Callable[[], float | int | str | Decimal | None]
 
 
