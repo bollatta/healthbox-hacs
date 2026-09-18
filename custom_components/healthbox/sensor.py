@@ -243,7 +243,6 @@ def generate_global_sensors_for_healthbox(
                 name="WiFi Internet Connection",
                 native_unit_of_measurement=None,
                 icon="mdi:web",
-                state_class=SensorStateClass.MEASUREMENT,
                 value_fn=lambda x: x.wifi.internet_connection,
             )
         )
