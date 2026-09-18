@@ -22,7 +22,8 @@
             "unknown": "Er is een onbekende fout opgetreden."
         },
         "abort": {
-            "reauth_successful": "Opnieuw verifiëren is gelukt."
+            "reauth_successful": "Opnieuw verifiëren is gelukt.",
+            "already_configured": "Apparaat is al geconfigureerd."
         }
     },
     "options": {

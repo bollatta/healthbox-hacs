@@ -70,6 +70,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
+            await self.async_set_unique_id(f"{DOMAIN}_{user_input[CONF_HOST]}")
+            self._abort_if_unique_id_configured()
             try:
                 if CONF_API_KEY in user_input:
                     await self._test_credentials(
@@ -88,7 +90,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 LOGGER.exception(exception)
                 errors["base"] = "unknown"
             else:
-                await self.async_set_unique_id(f"{DOMAIN}_{user_input[CONF_HOST]}")
                 return self.async_create_entry(
                     title=user_input[CONF_HOST],
                     data=user_input,
